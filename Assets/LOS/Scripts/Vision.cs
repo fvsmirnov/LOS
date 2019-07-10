@@ -26,20 +26,6 @@ namespace LOS
         private Quaternion _steppingAngle;
         private RaycastHit hit;
         private float angleBtw2Vec;
-        private bool autoStep = false;
-
-        public bool AutoStep
-        {
-            get { return autoStep; }
-            set
-            {
-                autoStep = value;
-                if (autoStep == true)
-                    CalculateSteppingAngle();
-                else
-                    UpdateSteppingAngle();
-            }
-        }
 
         private void Update()
         {
@@ -55,13 +41,9 @@ namespace LOS
             //Change angle depend on rotate direction
             angleBtw2Vec = (rotateDir == DrawRayDirection.Clockwise) ? AngleBetween2Vectors(vectorStart, vectorEnd) 
                                                                      : AngleBetween2Vectors(vectorEnd, vectorStart);
-            //Debug.Log(angleBtw2Vec);
-
             //Update angle between x axis and first point
-            float startDir = (int)rotateDir * AngleBetween2Vectors(vectorStart, Vector2.right);
-            _startAngle = Quaternion.AngleAxis(startDir, Vector3.up); //Create rotation from vector
-
-            //end angle
+            float startDir = AngleBetween2Vectors(vectorStart, Vector2.right);
+            _startAngle = Quaternion.AngleAxis(-startDir, Vector3.up); //Create rotation from vector
 
             CalculateSteppingAngle();
         }
@@ -71,19 +53,13 @@ namespace LOS
         {
             if (angleBtw2Vec > 1)
             {
-                angleBtw2Vec /= rayAmount;
-                _steppingAngle = Quaternion.AngleAxis((int)rotateDir * angleBtw2Vec, Vector3.up);
+                float angle = (int)rotateDir * (angleBtw2Vec / rayAmount);
+                _steppingAngle = Quaternion.AngleAxis(angle, Vector3.up);
             }
             else
             {
                 Debug.Log("<color=red>LOS: ray angle to small</color>");
             }
-        }
-
-        //Set ray angle value
-        public void UpdateSteppingAngle()
-        {
-            _steppingAngle = Quaternion.AngleAxis((int)rotateDir * steppingAngle, Vector3.up);   
         }
 
         bool state = false;
