@@ -11,6 +11,8 @@ namespace LOS
         private Vision vision;
         private SerializedProperty p0Position, p1Position;
 
+        private float radius = 3f;
+
         private void OnEnable()
         {
             vision = (Vision) target;
@@ -28,9 +30,6 @@ namespace LOS
             Handles.color = Color.green;
             Handles.DrawWireArc(vision.transform.position, vision.transform.up, vision.transform.right, 360, 3f);
 
-            Handles.PositionHandle(p0Position.vector3Value , Quaternion.identity);
-            Handles.PositionHandle(p1Position.vector3Value, Quaternion.identity);
-
             ChangePointCheck(p0Position, "Point 0", Color.white);
             ChangePointCheck(p1Position, "Point 1", Color.blue);
 
@@ -44,12 +43,24 @@ namespace LOS
             Handles.Label(property.vector3Value + labelOffset, title);
 
             EditorGUI.BeginChangeCheck();
-            property.vector3Value = Handles.DoPositionHandle(property.vector3Value, Quaternion.identity);
+            property.vector3Value = Handles.PositionHandle(vision.transform.position + property.vector3Value, Quaternion.identity) - vision.transform.position;
             if(EditorGUI.EndChangeCheck())
             {
+                property.vector3Value = Vector3.ClampMagnitude(property.vector3Value, radius);
+
                 Undo.RecordObject(vision, "move point");
                 EditorUtility.SetDirty(vision);
             }
+        }
+
+        [DrawGizmo(GizmoType.Selected | GizmoType.Active)]
+        static void DrawGizmoForMyScript(Vision scr, GizmoType gizmoType)
+        {
+            //if !360 degree
+            Gizmos.color = Color.yellow;
+            Gizmos.DrawSphere(scr.transform.position + scr.point0, 0.3f);
+            Gizmos.color = Color.blue;
+            Gizmos.DrawSphere(scr.transform.position + scr.point1, 0.3f);
         }
 
     }

@@ -9,7 +9,6 @@ namespace LOS
     {
         public int rayAmount = 24;
         public float visionDistance = 2f;
-        public float steppingAngle = 5f;
         public DrawRayDirection rotateDir = DrawRayDirection.Clockwise;
 
         public string target_tag = "Player";
@@ -19,8 +18,8 @@ namespace LOS
         public Color colorObstacle = Color.yellow;
         public Color colorTarget = Color.red;
 
-        [SerializeField] private Vector3 point0 = Vector3.right;
-        [SerializeField] private Vector3 point1 = Vector3.forward;
+        public Vector3 point0 = Vector3.right;
+        public Vector3 point1 = Vector3.forward;
 
         private Quaternion _startAngle;
         private Quaternion _steppingAngle;
@@ -113,29 +112,14 @@ namespace LOS
         /// <summary>
         /// Return angle between 2 vectors with range [0, 2Pi]
         /// </summary>
-        /// <param name="vec"></param>
         /// <param name="a">End vector</param>
         /// <param name="b">Start vector</param>
-        /// <returns></returns>
         public float AngleBetween2Vectors(Vector2 a, Vector2 b)
         {
             float angle = (Mathf.Atan2(a.y, a.x) - Mathf.Atan2(b.y, b.x)) * Mathf.Rad2Deg;  //Get angle
             angle = angle > 0 ? angle : angle + 360;    //Transform angle to range [0, 2Pi]
             return angle;
         }
-    
-
-#if UNITY_EDITOR
-    float sphereRadius = 0.3f;
-        private void OnDrawGizmos()
-        {
-            //if !360 degree
-            Gizmos.color = Color.yellow;
-            Gizmos.DrawSphere(point0, sphereRadius);
-            Gizmos.color = Color.blue;
-            Gizmos.DrawSphere(point1, sphereRadius);
-        }
-#endif
     }
 
     public enum DrawRayDirection
