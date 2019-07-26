@@ -13,24 +13,29 @@ namespace LOS
 
         public string target_tag = "Player";
         public LayerMask mask;
-        [Header("Vision colors")]
+        public float[] subArea;
+#if UNITY_EDITOR
+        public List<Color> subAreaColorList = new List<Color>();
+#endif
+
         public Color colorDefault = Color.white;
         public Color colorObstacle = Color.yellow;
         public Color colorTarget = Color.red;
-
-        public Vector3 point0 = Vector3.right;
-        public Vector3 point1 = Vector3.forward;
+        [HideInInspector] public Vector3 point0 = Vector3.right;
+        [HideInInspector] public Vector3 point1 = Vector3.forward;
 
         private Quaternion _startAngle;
         private Quaternion _steppingAngle;
         private RaycastHit hit;
         private float angleBtw2Vec;
 
-        private void Update()
+        void Update()
         {
             UpdateVisionArea();
             Detect();
         }
+
+        public int TargetOnSubLayer { get; private set; }
 
         public void UpdateVisionArea()
         {
@@ -47,6 +52,18 @@ namespace LOS
             CalculateSteppingAngle();
         }
 
+        /// <summary>
+        /// Return angle between 2 vectors with range [0, 2Pi]
+        /// </summary>
+        /// <param name="a">End vector</param>
+        /// <param name="b">Start vector</param>
+        public float AngleBetween2Vectors(Vector2 a, Vector2 b)
+        {
+            float angle = (Mathf.Atan2(a.y, a.x) - Mathf.Atan2(b.y, b.x)) * Mathf.Rad2Deg;  //Get angle
+            angle = angle > 0 ? angle : angle + 360;    //Transform angle to range [0, 2Pi]
+            return angle;
+        }
+
         //Calculate ray stepping angle
         public void CalculateSteppingAngle()
         {
@@ -61,6 +78,17 @@ namespace LOS
             }
         }
 
+        public bool Detect(out GameObject target)
+        {
+            if (Detect())
+            {
+                target = hit.collider.gameObject;
+                return true;
+            }
+            target = null;
+            return false;
+        }
+
         bool state = false;
         public bool Detect()
         {
@@ -71,21 +99,38 @@ namespace LOS
             for (int i = 0; i < rayAmount; i++)
             {
                 state = RaycastHitCheck(origin, direction, out hit, visionDistance, mask, target_tag);
+                if (state == true)
+                {
+                    TargetOnSubLayer = CheckTargetOnSubAreas();
+                    Debug.Log(TargetOnSubLayer);
+                    return state;
+                }
                 direction = _steppingAngle * direction;
             }
-
             return state;
         }
 
-        public bool Detect(out GameObject target)
+        private int CheckTargetOnSubAreas()
         {
-            if (Detect())
+            if (hit.collider != null)
             {
-                target = hit.collider.gameObject;
-                return true;
+                int subLayerIndex = -1;
+                for (int i = 0; i < subArea.Length; i++)
+                {
+                    if(i == 0)
+                    {
+                        if(hit.distance < subArea[i])
+                            subLayerIndex = i;
+                    }
+                    else
+                    {
+                        if (subArea[i - 1] < hit.distance && hit.distance < subArea[i])
+                            subLayerIndex = i;
+                    }
+                }
+                return subLayerIndex;
             }
-            target = null;
-            return false;
+            return -1;
         }
 
         private bool RaycastHitCheck(Vector3 origin, Vector3 direction, out RaycastHit hit, float visionDistance, LayerMask mask, string target_tag)
@@ -107,18 +152,6 @@ namespace LOS
                 Debug.DrawRay(origin, direction * visionDistance, colorDefault);
             }
             return false;
-        }
-
-        /// <summary>
-        /// Return angle between 2 vectors with range [0, 2Pi]
-        /// </summary>
-        /// <param name="a">End vector</param>
-        /// <param name="b">Start vector</param>
-        public float AngleBetween2Vectors(Vector2 a, Vector2 b)
-        {
-            float angle = (Mathf.Atan2(a.y, a.x) - Mathf.Atan2(b.y, b.x)) * Mathf.Rad2Deg;  //Get angle
-            angle = angle > 0 ? angle : angle + 360;    //Transform angle to range [0, 2Pi]
-            return angle;
         }
     }
 
